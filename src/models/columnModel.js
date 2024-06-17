@@ -1,5 +1,6 @@
-
 import Joi from 'joi'
+import { ObjectId } from 'mongodb'
+import { GET_DB } from '~/config/mongodb'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 // Define Collection (name & schema)
@@ -18,7 +19,47 @@ const COLUMN_COLLECTION_SCHEMA = Joi.object({
   _destroy: Joi.boolean().default(false)
 })
 
+const validateBeforeCreate = async (data) => {
+  return await COLUMN_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })
+}
+
+const createNew = async (data) => {
+  try {
+    const validateData = await validateBeforeCreate(data)
+    // Biến đổi dữ liệu từ string qua ObjectId
+    const newColumnToAdd = {
+      ...validateData,
+      boardId: new ObjectId(validateData.boardId)
+    }
+
+    return await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(newColumnToAdd)
+  } catch (error) { throw new Error(error) }
+}
+
+const findOneById = async (id) => {
+  try {
+    const result = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOne({ _id: new ObjectId(id) })
+    return result
+  } catch (error) { throw new Error(error) }
+}
+
+// Push một giá trị cardId vào cuối mảng cardOrderIds
+const pushCardOrderIds = async (card) => {
+  try {
+    const result = await GET_DB().collection(COLUMN_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(card.columnId) },
+      { $push: { cardOrderIds: new ObjectId(card._id) } },
+      { returnDocument: 'after' }
+    )
+
+    return result.value
+  } catch (error) { throw new Error(error) }
+}
+
 export const columnModel = {
   COLUMN_COLLECTION_NAME,
-  COLUMN_COLLECTION_SCHEMA
+  COLUMN_COLLECTION_SCHEMA,
+  createNew,
+  findOneById,
+  pushCardOrderIds
 }
