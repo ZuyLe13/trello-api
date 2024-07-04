@@ -1,4 +1,4 @@
-import Joi, { object } from 'joi'
+import Joi from 'joi'
 import { ObjectId } from 'mongodb'
 import { GET_DB } from '~/config/mongodb'
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
@@ -97,6 +97,10 @@ const update = async (boardId, updateData) => {
         delete updateData[fieldName]
       }
     })
+
+    if (updateData.columnOrderIds) {
+      updateData.columnOrderIds = updateData.columnOrderIds.map(_id => new ObjectId(_id))
+    }
 
     const result = await GET_DB().collection(BOARD_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(boardId) },
