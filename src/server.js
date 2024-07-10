@@ -23,13 +23,17 @@ const START_SERVER = () => {
   // Middleware xử lý lỗi tập trung
   app.use(errorHandlingMiddleware)
 
-  app.get('/', (req, res) => {
-    res.end('<h1>Hello World!</h1><hr>')
-  })
-
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`Hi ${env.AUTHOR}, Back-end is running at http://${env.APP_HOST}:${env.APP_PORT}`)
-  })
+  if (env.BUILD_MODE === 'production') {
+    // Môi trường Production
+    app.listen(process.env.PORT, () => {
+      console.log(`Production: Hi ${env.AUTHOR}, Back-end is running at Port ${process.env.PORT}`)
+    })
+  } else {
+    // Môi trường Local Dev
+    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+      console.log(`Local DEV: Hi ${env.AUTHOR}, Back-end is running at http://${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}`)
+    })
+  }
 
   exitHook(() => {
     CLOSE_DB()
